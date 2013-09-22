@@ -49,13 +49,13 @@ static const uint32_t v_09 = '/' | ('0'<<8) | ( '.' << 16 ) | ( '9' << 24 );
 
 int parse_http_request_line(parse_http_state * s) {
 	// METHOD PATH PROTO \r? \n
-	
+	(void)s;
+	return 0;
 }
 
 int parse_http_response_line(parse_http_state * s) {
 	register uniptr  p           = (uniptr) s->p;      // main pointer
 	register char   *e           = s->e;      // end of buffer
-	register unsigned char c;                 // current char
 	
 	char *ptr;
 	char err[256];err[0] = 0;
@@ -118,6 +118,8 @@ int parse_http_response_line(parse_http_state * s) {
 			s->reason.len = ptr - s->reason.str;
 			p.c++;
 			s->state = header_next;
+			break;
+		default:
 			break;
 	}
 	
@@ -292,6 +294,7 @@ int parse_http_request(parse_http_state * s) {
 	register unsigned char c;                 // current char
 	
 	char *msg;
+	(void)msg;
 	int i;
 	
 	char err[256];err[0] = 0;
