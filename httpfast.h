@@ -1,4 +1,6 @@
-#define _GNU_SOURCE
+#ifndef _GNU_SOURCE
+	#define _GNU_SOURCE
+#endif
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -6,6 +8,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <time.h>
+#include <stdlib.h>
 
 typedef struct {
 	char   *str;
