@@ -117,8 +117,6 @@ httpfast_parse(
     };
 
     typedef enum {
-                    start = 0,
-
                     request_line,
                     method,
                     path,
@@ -355,7 +353,7 @@ httpfast_parse(
                     }
                     return p + 1;
                 }
-                if (!lowcase[c]) {
+                if (!lowcase[(int)c]) {
                     errorf(HTTP_PARSER_BROKEN_HEADER,
                         "Broken first symbol of header: %02X",
                         c
@@ -367,7 +365,7 @@ httpfast_parse(
                 break;
 
             case header_name:
-                if (lowcase[c])
+                if (lowcase[(int)c])
                     break;
 
                 h_is_c = 0;
@@ -462,6 +460,8 @@ httpfast_parse(
             errorf(HTTP_PARSER_BROKEN_RESPONSE_LINE,
                 "Unexpected EOF while parsing response line"
             );
+        default:
+            break;
 
     }
 
