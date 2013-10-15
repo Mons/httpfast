@@ -1,5 +1,6 @@
 #include <stdarg.h>
 
+
 struct parse_http_events {
     void (*on_error)(void *uobj, int code, const char *fmt, va_list ap);
     void (*on_warn)(void *uobj, int code, const char *fmt, va_list ap);
