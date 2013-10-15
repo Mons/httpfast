@@ -148,11 +148,11 @@ httpfast_parse(
         state = header_next;
     }
 
-    typeof(str) p,      /* pointer */
-            pe,         /* end of data */
-            tb,         /* begin of token */
+    const char *p,      /* pointer */
+            *pe,        /* end of data */
+            *tb,        /* begin of token */
 
-            ptb         /* begin of prev token */
+            *ptb        /* begin of prev token */
     ;
     size_t tl;          /* length of token */
     size_t ptl;         /* length of prev token */
