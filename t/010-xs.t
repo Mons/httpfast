@@ -7,7 +7,7 @@ use open qw(:std :utf8);
 use lib qw(lib ../lib);
 use lib qw(blib/lib blib/arch ../blib/lib ../blib/arch);
 
-use Test::More tests    => 68;
+use Test::More tests    => 76;
 
 
 BEGIN {
@@ -101,13 +101,19 @@ eof
     isa_ok $res => 'HTTPFast::Request';
     is $res->[0], '', 'no errors';
     is_deeply $res->[1], [], 'headers';
-    is_deeply $res->[3], [ 'GET', '/', 1, 0 ], 'request line';
+    is_deeply $res->[3], [ 'GET', '/', '', 1, 0 ], 'request line';
     
     $res = HTTPFast::_parse(1, "GET / HTTP/1.0\r\nHost:abc.ru");
     isa_ok $res => 'HTTPFast::Request';
     is $res->[0], '', 'no errors';
     is_deeply $res->[1], [host => 'abc.ru'], 'headers';
-    is_deeply $res->[3], [ 'GET', '/', 1, 0 ], 'request line';
+    is_deeply $res->[3], [ 'GET', '/', '', 1, 0 ], 'request line';
+
+    $res = HTTPFast::_parse(1, "GET /?query HTTP/0.9\r\nHost:abc.ru");
+    isa_ok $res => 'HTTPFast::Request';
+    is $res->[0], '', 'no errors';
+    is_deeply $res->[1], [host => 'abc.ru'], 'headers';
+    is_deeply $res->[3], [ 'GET', '/', 'query', 0, 9 ], 'request line';
 
     $res = HTTPFast::_parse(1, "GET /abc/cde HTTP/1.\r\nHost:abc.ru");
     isa_ok $res => 'HTTPFast::Request';
@@ -116,6 +122,12 @@ eof
     is_deeply $res->[3], [], 'request line';
     
     $res = HTTPFast::_parse(1, "GET /abc/cde HTTP/1.");
+    isa_ok $res => 'HTTPFast::Request';
+    like $res->[0], qr{too short}i, 'error in protocol version';
+    is_deeply $res->[1], [], 'headers';
+    is_deeply $res->[3], [], 'request line';
+    
+    $res = HTTPFast::_parse(1, "GET /abc/cde?query HTTP/1.");
     isa_ok $res => 'HTTPFast::Request';
     like $res->[0], qr{too short}i, 'error in protocol version';
     is_deeply $res->[1], [], 'headers';

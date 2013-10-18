@@ -18,6 +18,9 @@ struct parse_http_events {
         const char *path,
         size_t path_len,
 
+        const char *query,
+        size_t query_len,
+
         int http_major,
         int http_minor
     );
@@ -120,6 +123,8 @@ httpfast_parse(
                     request_line,
                     method,
                     path,
+                    query,
+                    rhttp,
 
                     response_line,
                     status_sp,
@@ -150,10 +155,12 @@ httpfast_parse(
             *pe,        /* end of data */
             *tb,        /* begin of token */
 
-            *ptb        /* begin of prev token */
+            *ptb,       /* begin of prev token */
+            *pptb       /* begin of prev prev token */
     ;
     size_t tl;          /* length of token */
     size_t ptl;         /* length of prev token */
+    size_t pptl;        /* length of prev prev token */
     int h_is_c;         /* header is continuation */
     int headers = 0;    /* how many headers found */
     char c;
@@ -180,18 +187,46 @@ httpfast_parse(
             case method:
                 if (c != ' ' && c != '\t')
                     break;
-                ptb = tb;
-                ptl = p - ptb;
+                pptb = tb;
+                pptl = p - tb;
                 tb = p + 1;
                 state = path;
                 break;
 
+
+
             case path:
+                if (c == '?') {
+                    state = query;
+
+                    ptb = tb;
+                    ptl = p - tb;
+
+                    tb = p + 1;
+                    break;
+                }
+
+                if (c == ' ' || c == '\t') {
+                    state = rhttp;
+                    ptl = p - tb;
+                    ptb = tb;
+                    tb = p;
+                    tl = 0;
+                    break;
+                }
+                break;
+
+            case query:
                 if (c != ' ' && c != '\t')
                     break;
                 tl = p - tb;
-                p++;
+                state = rhttp;
+                break;
 
+
+            case rhttp:
+                /* H T T P / 1 . 0 */
+                /* 0 1 2 3 4 5 6 7 */
                 if (pe - p < 8) {
                     errorf(HTTP_PARSER_BROKEN_REQUEST_LINE,
                         "Too short request line"
@@ -208,6 +243,7 @@ httpfast_parse(
                     );
                 }
                 emit_event(on_request_line,
+                    pptb, pptl,
                     ptb, ptl,
                     tb, tl,
                     (int)(p[5] - '0'),

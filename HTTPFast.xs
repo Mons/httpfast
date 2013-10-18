@@ -66,6 +66,9 @@ on_request_line(
         const char *path,
         size_t path_len,
 
+        const char *query,
+        size_t query_len,
+
         int http_major,
         int http_minor
     )
@@ -76,6 +79,7 @@ on_request_line(
 
     av_push(rline, newSVpvn(method, method_len));
     av_push(rline, newSVpvn(path, path_len));
+    av_push(rline, newSVpvn(query, query_len));
     av_push(rline, newSViv(http_major));
     av_push(rline, newSViv(http_minor));
 
