@@ -7,7 +7,7 @@ use open qw(:std :utf8);
 use lib qw(lib ../lib);
 use lib qw(blib/lib blib/arch ../blib/lib ../blib/arch);
 
-use Test::More tests    => 76;
+use Test::More tests    => 90;
 
 
 BEGIN {
@@ -22,6 +22,28 @@ BEGIN {
 
 use Data::Dumper;
 
+
+# params
+{
+    is_deeply HTTPFast::_params("abc"), { abc => '' }, 'raw string';
+    is_deeply HTTPFast::_params("abc="), { abc => '' }, 'empty string';
+    is_deeply HTTPFast::_params("a=1"), { a => 1 }, "one param";
+    is_deeply HTTPFast::_params("a=1&b=2"), { a => 1, b => 2 }, "two params";
+    is_deeply HTTPFast::_params("a=1&"), { a => 1 }, "one param";
+    is_deeply HTTPFast::_params("a=1&b=2&"), { a => 1, b => 2 }, "two params";
+    is_deeply HTTPFast::_params("a=1&a=2"), { a => [1, 2] }, "one param twice";
+    is_deeply HTTPFast::_params("a=1&a=2&a=3"), { a => [1, 2, 3] },
+        "one param three times";
+    is_deeply HTTPFast::_params("a=1&a=2&"), { a => [1, 2] }, "one param twice";
+    is_deeply HTTPFast::_params("a=1&a=2&a=3&"), { a => [1, 2, 3] },
+        "one param three times";
+    is_deeply HTTPFast::_params("a=1&a&"), { a => [1, ''] }, "one param twice";
+    is_deeply HTTPFast::_params("a=1&a=&a=3&"), { a => [1, '', 3] },
+        "one param three times";
+    is_deeply HTTPFast::_params("a=1&a=&"), { a => [1, ''] }, "one param twice";
+    is_deeply HTTPFast::_params("a=1&a&a=3&"), { a => [1, '', 3] },
+        "one param three times";
+}
 
 # continuation at the first header
 {

@@ -7,6 +7,35 @@
 #include <stdio.h>
 
 static int
+on_param(void *o,
+	const char *name,
+	size_t name_len,
+	const char *value,
+	size_t value_len)
+{
+	HV *res = (HV *)o;
+	SV **pv = hv_fetch(res, name, name_len, 1);
+
+	if (!pv || !SvOK(*pv)) {
+		hv_store(res, name, name_len, newSVpvn(value, value_len), 0);
+		return 0;
+	}
+
+	if (SvROK(*pv)) {
+		av_push((AV *)SvRV(*pv), newSVpvn(value, value_len));
+		return 0;
+	}
+
+	SV * prev = hv_delete(res, name, name_len, 0);
+	AV *a = newAV();
+	av_push(a, prev);
+	av_push(a, newSVpvn(value, value_len));
+	hv_store(res, name, name_len, newRV((SV *)a), 0);
+	return 0;
+}
+
+
+static int
 on_header(void *o,
     const char *name,
     size_t name_len,
@@ -184,6 +213,17 @@ SV * _parse( type, hreq )
             RETVAL
 
 
+SV * _params( str )
+	SV * str;
+	CODE:
+		HV *res = newHV();
+		RETVAL = newRV((SV *)res);
+		const char *s;
+		size_t len;
+		s = SvPV(str, len);
+		httpfast_parse_params(s, len, on_param, res);
+	OUTPUT:
+		RETVAL
 
 MODULE = HTTPFast           PACKAGE = HTTPFast::Message
 

@@ -1,6 +1,77 @@
 #include <stdarg.h>
 
 
+static inline const char *
+httpfast_parse_params(const char *str, size_t str_len,
+	int (*on_param)(void *uobj,
+		const char *name, size_t name_len,
+		const char *value, size_t value_len), void *uobj)
+{
+	enum {
+		name,
+		value
+	} state = name;
+
+	const char *p, *pe;
+
+	const char *nb, *vb;
+	size_t nl, vl;
+
+	for (nb = p = str, pe = str + str_len; p < pe; p++) {
+		char c = *p;
+		switch(state) {
+			case name:
+				if (c == '=') {
+					nl = p - nb;
+					vb = p + 1;
+					state = value;
+					break;
+				}
+
+				if (c == '&') {
+					if (p == nb) {
+						nb = p + 1;
+						break;
+					}
+					nl = p - nb;
+					if (on_param(uobj, nb, nl, "", 0) != 0)
+						return p;
+					nb = p + 1;
+					break;
+				}
+				break;
+			case value:
+				if (c != '&')
+					break;
+				vl = p - vb;
+
+				if (vl || nl)
+					if (on_param(uobj, nb, nl, vb, vl) != 0)
+						return p;
+
+				nb = p + 1;
+				state = name;
+				break;
+		}
+	}
+	switch(state) {
+		case value:
+			vl = pe - vb;
+			if (vl || nl)
+				on_param(uobj, nb, nl, vb, vl);
+			break;
+		case name:
+			nl = pe - nb;
+			if (nl)
+				on_param(uobj, nb, nl, "", 0);
+			break;
+
+	}
+
+	return NULL;
+}
+
+
 struct parse_http_events {
     void (*on_error)(void *uobj, int code, const char *fmt, va_list ap);
     void (*on_warn)(void *uobj, int code, const char *fmt, va_list ap);
